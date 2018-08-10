@@ -1,7 +1,11 @@
 from setuptools import setup
 from setuptools.extension import Extension
 
-from Cython.Build import cythonize
+try:
+    from Cython.Build import cythonize
+except ImportError:
+    def cythonize(*args, **kwargs):
+        return []
 
 
 extensions = [
