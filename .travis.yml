@@ -1,0 +1,23 @@
+sudo: required
+dist: xenial
+language: python
+cache: pip
+python:
+  - "3.6"
+  - "3.7"
+  - "nightly"
+env:
+  TOXENV=py
+
+matrix:
+  include:
+    - python: 3.7
+      env: TOXENV=build
+  allowed_failures:
+    - python: "nightly"
+
+install:
+  - pip install -U pip tox
+
+script:
+  - tox
