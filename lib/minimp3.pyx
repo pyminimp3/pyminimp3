@@ -6,7 +6,16 @@ from array import array
 from libc.string cimport memcpy
 from cpython cimport array
 
-cdef extern from "minimp3_impl.h":
+
+cdef extern from *:
+    """
+    /* In order to get the minimp3 symbols to build, we must define the
+     * MINIMP3_IMPLEMENTATION macro.
+     */
+    #define MINIMP3_IMPLEMENTATION
+    """
+
+cdef extern from "minimp3.h":
 
     ctypedef struct mp3dec_frame_info_t:
         int frame_bytes
