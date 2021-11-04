@@ -3,7 +3,7 @@ Wrappers for the minimp3 library
 """
 from array import array
 
-from libc.string cimport memcpy
+from libc.string cimport memcpy, memset
 from cpython cimport array
 
 
@@ -43,6 +43,7 @@ cdef extern from "minimp3.h":
 
 # Initialize the decoder structure
 cdef mp3dec_t MP3_DECODER
+memset(&MP3_DECODER, 0, sizeof(mp3dec_t))
 mp3dec_init(&MP3_DECODER)
 
 cdef size_t MAX_BUFFER_SIZE = MINIMP3_MAX_SAMPLES_PER_FRAME * 100
@@ -89,6 +90,7 @@ cdef int decode_frame(unsigned char* buffer, int mp3_size,
     event that a frame is either not done being read, or some data has been
     skipped), or InvalidData, in the event of another type of error.
     """
+    memset(frame_info, 0, sizeof(mp3dec_frame_info_t))
     cdef int samples = mp3dec_decode_frame(&MP3_DECODER,
                                            buffer,
                                            mp3_size,
