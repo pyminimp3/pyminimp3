@@ -19,6 +19,7 @@ cdef extern from "minimp3.h":
 
     ctypedef struct mp3dec_frame_info_t:
         int frame_bytes
+        int frame_offset
         int channels
         int hz
         int layer
@@ -26,12 +27,12 @@ cdef extern from "minimp3.h":
 
 
     ctypedef struct mp3dec_t:
-        float mdct_overlap[1][1]
-        float qmf_state[1]
+        float mdct_overlap[2][9*32]
+        float qmf_state[15*2*32]
         int reserv
         int free_format_bytes
-        unsigned char header[1]
-        unsigned char reserv_buf[1]
+        unsigned char header[4]
+        unsigned char reserv_buf[511]
 
     cdef const size_t MINIMP3_MAX_SAMPLES_PER_FRAME
 
@@ -45,6 +46,37 @@ cdef mp3dec_t MP3_DECODER
 mp3dec_init(&MP3_DECODER)
 
 cdef size_t MAX_BUFFER_SIZE = MINIMP3_MAX_SAMPLES_PER_FRAME * 100
+
+cdef class Frame:
+    cdef public tuple samples
+    cdef public int channels
+    cdef public int hz
+    cdef public int layer
+    cdef public int bitrate_kbps
+
+    def __init__(self, samples, hz, layer, bitrate_kbps):
+        self.samples = samples
+        self.channels = len(samples)
+        self.hz = hz
+        self.layer = layer
+        self.bitrate_kbps = bitrate_kbps
+
+    @staticmethod
+    cdef Frame from_frame_info(array.array pcm, mp3dec_frame_info_t* frame_info):
+        channels = frame_info.channels
+
+        samples = tuple(
+            pcm[i::channels]
+            for i in range(channels)
+        )
+
+        return Frame(
+            samples,
+            frame_info.hz,
+            frame_info.layer,
+            frame_info.bitrate_kbps
+        )
+
 
 cdef int decode_frame(unsigned char* buffer, int mp3_size,
                       short *pcm,
@@ -76,8 +108,8 @@ cdef size_t refill_buffer(mp3_fobj, array.array buffer, size_t buf_size):
     """
     Load more data into the buffer array
     """
-    cdef int old_buffer_len = len(buffer)
-    cdef int bytes_read = buf_size
+    cdef size_t old_buffer_len = len(buffer)
+    cdef size_t bytes_read = buf_size
 
     try:
         buffer.fromfile(mp3_fobj, buf_size)
@@ -87,7 +119,7 @@ cdef size_t refill_buffer(mp3_fobj, array.array buffer, size_t buf_size):
     return bytes_read
 
 
-cpdef array.array load_frame(mp3_fobj, size_t buf_size=MINIMP3_MAX_SAMPLES_PER_FRAME):
+cpdef Frame load_frame(mp3_fobj, size_t buf_size=MINIMP3_MAX_SAMPLES_PER_FRAME):
     """
     Load a single frame from the file-like ``mp3_fobj``
 
@@ -101,28 +133,30 @@ cpdef array.array load_frame(mp3_fobj, size_t buf_size=MINIMP3_MAX_SAMPLES_PER_F
     cdef array.array pcm = array.array('h')
     cdef array.array buffer = array.array('B')
 
-    cdef size_t pos = 0
+    array.resize(pcm, MINIMP3_MAX_SAMPLES_PER_FRAME)
+
+    cdef size_t pos = mp3_fobj.tell()
     cdef size_t samples = 0
     cdef size_t mp3_size = 0
 
-
     while True:
-        mp3_size = refill_buffer(mp3_fobj, buffer, buf_size)
-        if mp3_size == 0:
+        if refill_buffer(mp3_fobj, buffer, buf_size) == 0:
             raise ValueError("Out of data")
 
         try:
-            samples = decode_frame(buffer.data.as_uchars[pos:], mp3_size,
+            samples = decode_frame(buffer.data.as_uchars[:],
+                                   len(buffer),
                                    pcm.data.as_shorts,
                                    &frame_info)
         except InsufficientData:
             pass
         except InvalidDataError:
             mp3_fobj.seek(pos)
+            raise
         else:
             break
-        finally:
-            pos += frame_info.frame_bytes
+
+    pos += frame_info.frame_bytes
 
     cdef size_t num_vals
     if samples:
@@ -130,7 +164,8 @@ cpdef array.array load_frame(mp3_fobj, size_t buf_size=MINIMP3_MAX_SAMPLES_PER_F
         pcm = pcm[0:num_vals]
 
     mp3_fobj.seek(pos)
-    return pcm
+
+    return Frame.from_frame_info(pcm, &frame_info)
 
 
 class InsufficientData(ValueError):
