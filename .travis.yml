@@ -1,20 +1,16 @@
 sudo: required
-dist: xenial
+dist: focal
 language: python
 cache: pip
 python:
-  - "3.6"
-  - "3.7"
-  - "nightly"
+  - "3.10"
 env:
   TOXENV=py
 
 matrix:
   include:
-    - python: 3.7
+    - python: "3.10"
       env: TOXENV=build
-  allowed_failures:
-    - python: "nightly"
 
 install:
   - pip install -U pip tox
