@@ -1,6 +1,44 @@
 [build-system]
-requires = ["setuptools >= 41.0", "wheel", "cython"]
+requires = ["setuptools >= 77", "wheel", "cython >= 3.1"]
 build-backend = "setuptools.build_meta"
+
+[project]
+name = "pyminimp3"
+version = "0.0.1"
+description = "Python bindings for minimp3"
+readme = {file = "README.rst", content-type = "text/x-rst"}
+requires-python = ">=3.10"
+license = "Apache-2.0"
+license-files = ["LICENSE"]
+authors = [
+    {name = "Paul Ganssle", email = "paul@ganssle.io"},
+]
+classifiers = [
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
+    "Programming Language :: Python :: 3.14",
+]
+
+[project.urls]
+Homepage = "https://github.com/pyminimp3/pyminimp3"
+
+[tool.setuptools]
+package-dir = {"" = "src"}
+ext-modules = [
+    {name = "pyminimp3._backend", sources = ["lib/minimp3.pyx"], include-dirs = ["lib", "minimp3"], language = "c"},
+]
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.setuptools.package-data]
+pyminimp3 = ["py.typed", "*.pyi"]
+
+[tool.black]
+target-version = ["py310"]
 
 [tool.isort]
 profile = "black"
