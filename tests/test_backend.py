@@ -13,24 +13,25 @@ import pytest
 
 from pyminimp3._backend import load_frame
 
-
 # Data files
-DATA_PATH = Path(__file__).parent / 'data'
+DATA_PATH = Path(__file__).parent / "data"
 
 MP3_FILES = (
-    'dwd_diabolic_10s.mp3',
-    'meganeko_discovery_10s.mp3',
-    'meganeko_discovery_10s_middle.mp3',
+    "dwd_diabolic_10s.mp3",
+    "meganeko_discovery_10s.mp3",
+    "meganeko_discovery_10s_middle.mp3",
 )
+
 
 def _get_sound_files():
     sound_files = []
     for fname in MP3_FILES:
         mp3_path = DATA_PATH / fname
-        wav_path = str(mp3_path.with_suffix('.wav'))
+        wav_path = str(mp3_path.with_suffix(".wav"))
         sound_files.append((mp3_path, wav_path))
 
     return sound_files
+
 
 SOUND_FILES = _get_sound_files()
 
@@ -44,19 +45,18 @@ WARMUP_FRAME_COUNT = 4
 
 
 def _read_wav_samples(wav_path, start, frame_count):
-    with wave.open(wav_path, 'rb') as wav_file:
+    with wave.open(wav_path, "rb") as wav_file:
         wav_file.setpos(start)
         wav_bytes = wav_file.readframes(frame_count)
         channel_count = wav_file.getnchannels()
 
-    interleaved_samples = array('h')
+    interleaved_samples = array("h")
     interleaved_samples.frombytes(wav_bytes)
-    if sys.byteorder != 'little':
+    if sys.byteorder != "little":
         interleaved_samples.byteswap()
 
     return tuple(
-        interleaved_samples[channel::channel_count]
-        for channel in range(channel_count)
+        interleaved_samples[channel::channel_count] for channel in range(channel_count)
     )
 
 
@@ -66,10 +66,8 @@ def _join_frame_samples(frames):
 
     return tuple(
         array(
-            'h',
-            itertools.chain.from_iterable(
-                frame.samples[channel] for frame in frames
-            ),
+            "h",
+            itertools.chain.from_iterable(frame.samples[channel] for frame in frames),
         )
         for channel in range(channel_count)
     )
@@ -92,11 +90,11 @@ def _assert_samples_match(actual, expected):
 
 
 # Tests
-@pytest.mark.parametrize('mp3_path, wav_path', SOUND_FILES)
-@pytest.mark.parametrize('frame_count', (1, 2), ids=('single', 'multiple'))
+@pytest.mark.parametrize("mp3_path, wav_path", SOUND_FILES)
+@pytest.mark.parametrize("frame_count", (1, 2), ids=("single", "multiple"))
 def test_decode_frames(mp3_path, wav_path, frame_count):
     frames_to_read = WARMUP_FRAME_COUNT + frame_count
-    with open(mp3_path, 'rb') as mp3_file:
+    with open(mp3_path, "rb") as mp3_file:
         frames = tuple(load_frame(mp3_file) for _ in range(frames_to_read))
 
     decoded_frames = frames[-frame_count:]
