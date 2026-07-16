@@ -3,8 +3,8 @@ Wrappers for the minimp3 library
 """
 from array import array
 
-from libc.string cimport memcpy, memset
 from cpython cimport array
+from libc.string cimport memcpy, memset
 
 
 cdef extern from *:
