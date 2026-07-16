@@ -3,11 +3,11 @@
 ##       will be migrated to tests that instead test the public API when the
 ##       public API is ready
 
-from array import array
 import itertools
-from pathlib import Path
 import sys
 import wave
+from array import array
+from pathlib import Path
 
 import pytest
 

@@ -2,3 +2,6 @@
 requires = ["setuptools >= 41.0", "wheel", "cython"]
 build-backend = "setuptools.build_meta"
 
+[tool.isort]
+profile = "black"
+known_first_party = ["pyminimp3"]
