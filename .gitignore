@@ -17,7 +17,10 @@ docs/_build/
 
 # Testing
 .cache
+.coverage
+.coverage.*
 .hypothesis_cache
+htmlcov/
 .mypy_cache
 .pytest_cache
 .tox
