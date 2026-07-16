@@ -11,7 +11,7 @@ from pathlib import Path
 
 import pytest
 
-from pyminimp3._backend import load_frame
+import pyminimp3
 
 # Data files
 DATA_PATH = Path(__file__).parent / "data"
@@ -95,7 +95,7 @@ def _assert_samples_match(actual, expected):
 def test_decode_frames(mp3_path, wav_path, frame_count):
     frames_to_read = WARMUP_FRAME_COUNT + frame_count
     with open(mp3_path, "rb") as mp3_file:
-        frames = tuple(load_frame(mp3_file) for _ in range(frames_to_read))
+        frames = tuple(pyminimp3.load_frame(mp3_file) for _ in range(frames_to_read))
 
     decoded_frames = frames[-frame_count:]
     actual_samples = _join_frame_samples(decoded_frames)
