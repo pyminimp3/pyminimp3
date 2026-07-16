@@ -38,7 +38,7 @@ cdef extern from "minimp3.h":
 
     void mp3dec_init(mp3dec_t* dec)
 
-    int mp3dec_decode_frame(mp3dec_t* dec, unsigned char* mp3, int mp3_bytes, short* pcm, mp3dec_frame_info_t* info)
+    int mp3dec_decode_frame(mp3dec_t* dec, const unsigned char* mp3, int mp3_bytes, short* pcm, mp3dec_frame_info_t* info)
 
 
 # Initialize the decoder structure
@@ -79,7 +79,7 @@ cdef class Frame:
         )
 
 
-cdef int decode_frame(unsigned char* buffer, int mp3_size,
+cdef int decode_frame(const unsigned char* buffer, int mp3_size,
                       short *pcm,
                       mp3dec_frame_info_t* frame_info) except -1:
     """
@@ -127,7 +127,7 @@ cpdef Frame load_frame(mp3_fobj, size_t buf_size=MINIMP3_MAX_SAMPLES_PER_FRAME):
 
     ``mp3_fobj`` will be read in chunks of size ``buf_size`` and decoded until
     a full frame has been populated, at which point the function returns an
-    an array of `short` containing the frame data.
+    a Frame object.
     """
     cdef mp3dec_frame_info_t frame_info
 
@@ -146,7 +146,7 @@ cpdef Frame load_frame(mp3_fobj, size_t buf_size=MINIMP3_MAX_SAMPLES_PER_FRAME):
             raise ValueError("Out of data")
 
         try:
-            samples = decode_frame(buffer.data.as_uchars[:],
+            samples = decode_frame(buffer.data.as_uchars,
                                    len(buffer),
                                    pcm.data.as_shorts,
                                    &frame_info)
